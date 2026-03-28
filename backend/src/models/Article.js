@@ -11,7 +11,26 @@ const articleSchema = new mongoose.Schema(
     sentimentScore: { type: Number, default: 0 },
     tags: [{ type: String }],
     embedding: [{ type: Number }],
-    storyArcId: { type: mongoose.Schema.Types.ObjectId, ref: "StoryArc" }
+    storyArcId: { type: mongoose.Schema.Types.ObjectId, ref: "StoryArc" },
+    actionInsights: [
+      {
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+        trigger: { type: String, required: true, trim: true },
+        actions: [{ type: String }],
+        urgency: {
+          type: String,
+          enum: ["Low", "Medium", "High"],
+          default: "Medium"
+        },
+        timeHorizon: {
+          type: String,
+          enum: ["Immediate", "Short-term", "Long-term"],
+          default: "Short-term"
+        },
+        signals: [{ type: String }],
+        generatedAt: { type: Date, default: Date.now }
+      }
+    ]
   },
   { timestamps: true }
 );

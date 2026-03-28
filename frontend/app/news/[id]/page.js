@@ -9,7 +9,8 @@ import ChatPanel from "../../../components/news/ChatPanel";
 import InsightPanel from "../../../components/news/InsightPanel";
 import PredictionEngine from "../../../components/PredictionEngine";
 import { useRequireAuth } from "../../../lib/authGuard";
-import { fetchArticleById, generateNewsToAction, summarizeArticle } from "../../../lib/api";
+import { fetchArticleById, generateNewsToAction, summarizeArticle, enhanceHeadline } from "../../../lib/api";
+import { cleanArticleContent } from "../../../lib/cleanContent";
 
 export default function NewsDetailPage() {
   const { user, ready, isAuthenticated } = useRequireAuth();
@@ -22,7 +23,9 @@ export default function NewsDetailPage() {
   const [loading, setLoading] = useState(true);
   const [briefingLoading, setBriefingLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [actionAnimated, setActionAnimated] = useState(false);
   const [error, setError] = useState("");
+  const [catchyTitle, setCatchyTitle] = useState("");
 
   useEffect(() => {
     if (!articleId || !ready || !isAuthenticated) return;
@@ -31,6 +34,15 @@ export default function NewsDetailPage() {
       try {
         const data = await fetchArticleById(articleId);
         setArticle(data);
+
+        // Enhance headline with AI
+        try {
+          const headlineResult = await enhanceHeadline(data.title);
+          setCatchyTitle(headlineResult.enhanced);
+        } catch (_) {
+          setCatchyTitle(data.title);
+        }
+
         // Auto-generate briefing on load for better UX
         setBriefingLoading(true);
         try {
@@ -93,6 +105,47 @@ export default function NewsDetailPage() {
     return "bg-amber-500/20 text-amber-200 border-amber-500/40";
   }
 
+  function getActionIcon(index) {
+    const icons = ["🎯", "📋", "🔄", "📈", "💡"];
+    return icons[index % icons.length];
+  }
+
+  function highlightKeywords(text) {
+    // Highlight key business/decision terms
+    const keywords = [
+      "immediately",
+      "urgent",
+      "critical",
+      "monitor",
+      "watch",
+      "expect",
+      "likely",
+      "consider",
+      "review",
+      "assess",
+      "confirm",
+      "track",
+      "position",
+      "adjust",
+    ];
+    let highlighted = text;
+    keywords.forEach((keyword) => {
+      const regex = new RegExp(`\\b(${keyword})\\b`, "gi");
+      highlighted = highlighted.replace(
+        regex,
+        '<span class="font-semibold text-cyan-200">$1</span>'
+      );
+    });
+    return highlighted;
+  }
+
+  useEffect(() => {
+    if (!actionPlan) return;
+    setActionAnimated(false);
+    const timer = setTimeout(() => setActionAnimated(true), 20);
+    return () => clearTimeout(timer);
+  }, [actionPlan]);
+
   if (!ready || !isAuthenticated) {
     return (
       <main className="mx-auto max-w-7xl px-4 py-8">
@@ -103,8 +156,7 @@ export default function NewsDetailPage() {
 
   return (
     <AppShell
-      title="Why This Matters"
-      subtitle="AI-powered insights reveal what happens next, who's affected, and what you should know."
+      title={catchyTitle || "News"}
     >
       {error && <div className="panel p-4 text-sm text-rose-300">{error}</div>}
 
@@ -234,85 +286,232 @@ export default function NewsDetailPage() {
               )}
 
               {/* NEWS-TO-ACTION ENGINE */}
-              <div className="panel p-5 border border-cyan-300/30 bg-cyan-300/[0.05]">
-                <div className="flex items-center justify-between gap-3">
+              <div className="panel p-6 border-2 border-cyan-300/50 bg-gradient-to-br from-cyan-400/10 via-cyan-300/[0.06] to-transparent shadow-[0_0_0_1px_rgba(34,211,238,0.15),0_18px_40px_rgba(8,47,73,0.45)]">
+                <div className="flex items-center justify-between gap-3 mb-5">
                   <div>
-                    <p className="eyebrow text-cyan-200">⚡ NEWS-TO-ACTION ENGINE</p>
-                    <h2 className="mt-1 text-xl font-semibold text-slate-100">What should you do next?</h2>
+                    <p className="eyebrow text-cyan-100">💎 WHAT SHOULD YOU DO NEXT?</p>
+                    <h2 className="mt-1 text-2xl font-bold text-slate-100">
+                      Your <span className="text-cyan-300">Action Plan</span>
+                    </h2>
+                    <p className="mt-1 text-xs text-slate-400">
+                      Personalized decision framework based on your profile
+                    </p>
                   </div>
 
                   <button
                     onClick={() => runActionPlan(true)}
                     disabled={actionLoading}
-                    className="rounded-lg bg-cyan-300/20 text-cyan-100 px-3 py-1.5 text-xs font-semibold hover:bg-cyan-300/30 disabled:opacity-60 transition"
+                    className="rounded-lg bg-cyan-300/20 text-cyan-100 px-3 py-1.5 text-xs font-semibold hover:bg-cyan-300/35 hover:shadow-lg disabled:opacity-60 transition-all duration-200"
                   >
-                    {actionLoading ? "Building..." : actionPlan ? "Refresh Plan" : "Generate Plan"}
+                    {actionLoading ? "Generating..." : actionPlan ? "Regenerate" : "Generate"}
                   </button>
                 </div>
 
                 {!actionPlan && !actionLoading ? (
-                  <p className="mt-3 text-sm text-slate-300">
-                    Generate an action plan to see decision triggers, recommended steps, urgency, and follow-up signals.
-                  </p>
+                  <div className="mt-3 rounded-lg border border-cyan-300/20 bg-cyan-300/[0.06] p-4">
+                    <p className="text-sm text-slate-300">
+                      <span className="text-cyan-200 font-semibold">📊 Your advisor ready.</span> Generate
+                      a personalized action plan to see decision triggers, specific steps, urgency level, and
+                      signals to watch.
+                    </p>
+                  </div>
                 ) : null}
 
-                {actionPlan ? (
-                  <div className="mt-4 space-y-4">
-                    <div className="rounded-lg border border-white/10 bg-white/[0.03] p-3">
-                      <p className="mono text-xs text-cyan-200">Decision Trigger</p>
-                      <p className="mt-2 text-sm text-slate-100">{actionPlan.decisionTrigger}</p>
+                {actionLoading ? (
+                  <div className="mt-4 grid gap-3 md:grid-cols-2">
+                    <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4 md:col-span-2 animate-pulse">
+                      <div className="h-4 w-32 rounded bg-white/20" />
+                      <div className="mt-3 space-y-2">
+                        <div className="h-3 w-full rounded bg-white/10" />
+                        <div className="h-3 w-11/12 rounded bg-white/10" />
+                      </div>
+                    </div>
+                    {[1, 2, 3, 4].map((i) => (
+                      <div key={i} className="rounded-xl border border-white/10 bg-white/[0.04] p-4 animate-pulse">
+                        <div className="h-4 w-24 rounded bg-white/20" />
+                        <div className="mt-3 h-3 w-20 rounded bg-white/10" />
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+
+                {actionPlan && !actionLoading ? (
+                  <div className={`mt-5 space-y-4 transition-all duration-500 ease-out ${
+                    actionAnimated ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+                  }`}>
+                    {/* DECISION TRIGGER - Full Width */}
+                    <div className="group relative rounded-xl border border-cyan-300/40 bg-gradient-to-r from-cyan-500/10 to-cyan-400/5 p-5 hover:border-cyan-300/60 hover:shadow-lg hover:shadow-cyan-500/20 transition-all duration-300 cursor-default">
+                      <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 bg-gradient-to-r from-cyan-500/5 to-transparent transition-opacity duration-300" />
+                      <div className="relative">
+                        <p className="mono text-xs text-cyan-200 font-semibold uppercase tracking-wide">⚡ Decision Trigger</p>
+                        <p className="mt-3 text-sm leading-relaxed text-slate-100">
+                          <span
+                            dangerouslySetInnerHTML={{
+                              __html: highlightKeywords(actionPlan.trigger || actionPlan.decisionTrigger),
+                            }}
+                          />
+                        </p>
+                      </div>
                     </div>
 
-                    <div className="grid gap-3 md:grid-cols-2">
-                      <div className="rounded-lg border border-white/10 bg-white/[0.03] p-3">
-                        <p className="mono text-xs text-cyan-200">Urgency</p>
-                        <span className={`mt-2 inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${urgencyClass(actionPlan.urgencyLevel)}`}>
-                          {actionPlan.urgencyLevel}
+                    {/* ACTIONS GRID */}
+                    <div>
+                      <p className="text-xs font-semibold text-cyan-100 uppercase tracking-wide mb-3">
+                        → Recommended Next Steps
+                      </p>
+                      <div className="grid gap-3 md:grid-cols-2">
+                        {(actionPlan.actions || actionPlan.recommendedActions || []).map((step, index) => (
+                          <div
+                            key={index}
+                            style={{
+                              animation: actionAnimated
+                                ? `fadeInUp 0.5s ease-out ${100 + index * 80}ms both`
+                                : "none",
+                            }}
+                            className="group relative rounded-lg border border-white/15 bg-white/[0.05] p-4 hover:border-cyan-300/50 hover:bg-cyan-300/[0.08] hover:shadow-md hover:shadow-cyan-500/15 transition-all duration-300 hover:-translate-y-0.5 cursor-pointer"
+                          >
+                            <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 bg-gradient-to-br from-cyan-500/5 to-transparent transition-opacity duration-300" />
+                            <div className="relative">
+                              <div className="flex items-start gap-3">
+                                <span className="text-lg flex-shrink-0 mt-0.5">{getActionIcon(index)}</span>
+                                <p className="text-sm text-slate-100 leading-relaxed">
+                                  <span
+                                    dangerouslySetInnerHTML={{
+                                      __html: highlightKeywords(step),
+                                    }}
+                                  />
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* FOLLOW-UP SIGNALS */}
+                    <div>
+                      <p className="text-xs font-semibold text-cyan-100 uppercase tracking-wide mb-3">
+                        🔔 Signals to Watch
+                      </p>
+                      <div className="grid gap-2">
+                        {(actionPlan.signals || actionPlan.followUpSignals || []).map((signal, index) => (
+                          <div
+                            key={index}
+                            style={{
+                              animation: actionAnimated
+                                ? `slideInLeft 0.5s ease-out ${200 + index * 60}ms both`
+                                : "none",
+                            }}
+                            className="group relative flex items-start gap-3 rounded-lg border border-white/10 bg-white/[0.03] p-3 hover:border-amber-300/40 hover:bg-amber-300/[0.08] transition-all duration-300 cursor-pointer hover:translate-x-1"
+                          >
+                            <span className="text-amber-300 flex-shrink-0 mt-1">◆</span>
+                            <p className="text-xs text-slate-100 leading-relaxed">
+                              <span
+                                dangerouslySetInnerHTML={{
+                                  __html: highlightKeywords(signal),
+                                }}
+                              />
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* METRICS GRID */}
+                    <div className="grid gap-3 md:grid-cols-2 pt-2">
+                      {/* URGENCY */}
+                      <div
+                        style={{
+                          animation: actionAnimated ? `fadeInUp 0.5s ease-out 350ms both` : "none",
+                        }}
+                        className="group rounded-lg border border-white/10 bg-white/[0.03] p-4 hover:shadow-md transition-all duration-300"
+                      >
+                        <p className="text-xs font-semibold text-slate-300 uppercase tracking-wide mb-3">
+                          📊 Urgency Level
+                        </p>
+                        <span
+                          className={`inline-flex rounded-full border px-3 py-1.5 text-xs font-bold transition-all duration-300 ${urgencyClass(
+                            actionPlan.urgency || actionPlan.urgencyLevel
+                          )} group-hover:scale-105 group-hover:shadow-lg`}
+                        >
+                          {actionPlan.urgency === "High" || actionPlan.urgencyLevel === "High"
+                            ? "🔴 Act Now"
+                            : actionPlan.urgency === "Low" || actionPlan.urgencyLevel === "Low"
+                            ? "🟢 Can Wait"
+                            : "🟡 Soon"}
                         </span>
                       </div>
 
-                      <div className="rounded-lg border border-white/10 bg-white/[0.03] p-3">
-                        <p className="mono text-xs text-cyan-200">Time Horizon</p>
-                        <p className="mt-2 text-sm font-semibold text-slate-100">{actionPlan.timeHorizon}</p>
+                      {/* TIME HORIZON */}
+                      <div
+                        style={{
+                          animation: actionAnimated ? `fadeInUp 0.5s ease-out 430ms both` : "none",
+                        }}
+                        className="group rounded-lg border border-white/10 bg-white/[0.03] p-4 hover:shadow-md transition-all duration-300"
+                      >
+                        <p className="text-xs font-semibold text-slate-300 uppercase tracking-wide mb-3">
+                          ⏱️ Time Horizon
+                        </p>
+                        <span className="inline-flex rounded-full border border-cyan-300/40 bg-cyan-300/15 px-3 py-1.5 text-xs font-semibold text-cyan-100 transition-all duration-300 group-hover:border-cyan-300/70 group-hover:bg-cyan-300/25 group-hover:shadow-lg group-hover:shadow-cyan-500/20">
+                          {actionPlan.timeHorizon}
+                        </span>
                       </div>
-                    </div>
-
-                    <div className="rounded-lg border border-white/10 bg-white/[0.03] p-3">
-                      <p className="mono text-xs text-cyan-200">Recommended Actions</p>
-                      <ul className="mt-2 space-y-2 text-sm text-slate-100">
-                        {(actionPlan.recommendedActions || []).map((step, index) => (
-                          <li key={index} className="flex gap-2">
-                            <span className="mt-0.5 shrink-0 text-cyan-300">{index + 1}.</span>
-                            <span>{step}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    <div className="rounded-lg border border-white/10 bg-white/[0.03] p-3">
-                      <p className="mono text-xs text-cyan-200">Follow-up Signals</p>
-                      <ul className="mt-2 space-y-2 text-sm text-slate-100">
-                        {(actionPlan.followUpSignals || []).map((signal, index) => (
-                          <li key={index} className="flex gap-2">
-                            <span className="mt-0.5 shrink-0 text-cyan-300">•</span>
-                            <span>{signal}</span>
-                          </li>
-                        ))}
-                      </ul>
                     </div>
                   </div>
                 ) : null}
+
+                {/* Add keyframe animations */}
+                <style>{`
+                  @keyframes fadeInUp {
+                    from {
+                      opacity: 0;
+                      transform: translateY(12px);
+                    }
+                    to {
+                      opacity: 1;
+                      transform: translateY(0);
+                    }
+                  }
+                  
+                  @keyframes slideInLeft {
+                    from {
+                      opacity: 0;
+                      transform: translateX(-12px);
+                    }
+                    to {
+                      opacity: 1;
+                      transform: translateX(0);
+                    }
+                  }
+                `}</style>
               </div>
+
+              <ChatPanel />
 
               {/* ORIGINAL ARTICLE */}
               <div className="panel p-6">
                 <p className="eyebrow">📄 FULL ARTICLE</p>
-                <div className="mt-4 prose prose-invert max-w-none text-sm text-slate-300 whitespace-pre-wrap">
-                  {article.content}
+                <div className="mt-4 space-y-4">
+                  {article.content ? (
+                    <div className="space-y-4">
+                      {cleanArticleContent(article.content)
+                        .split("\n\n")
+                        .map((paragraph, index) => (
+                          <p
+                            key={index}
+                            className="text-sm text-slate-200 leading-relaxed max-w-4xl"
+                          >
+                            {paragraph}
+                          </p>
+                        ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-slate-400 italic">No article content available.</p>
+                  )}
                 </div>
 
                 {article.sourceUrl && (
-                  <div className="mt-4 pt-4 border-t border-white/10">
+                  <div className="mt-6 pt-4 border-t border-white/10">
                     <a
                       href={article.sourceUrl}
                       target="_blank"
@@ -328,8 +527,6 @@ export default function NewsDetailPage() {
 
             {/* RIGHT SIDEBAR: CHAT + PREDICTIONS + ACTIONS */}
             <div className="space-y-4 lg:sticky lg:top-20 lg:h-fit">
-              <ChatPanel />
-
               {/* PREDICTION ENGINE */}
               {articleId && <PredictionEngine articleId={articleId} />}
 

@@ -157,10 +157,14 @@ RULES:
 }
 
 export function buildNewsToActionPrompt({ article, profile }) {
-  return `You are NeuroNews News-to-Action Engine.
+  return `You are a business intelligence analyst.
+
+INPUT:
+- News article content
+- User profile (profession, interests, goals)
 
 TASK:
-Turn this news article into actionable intelligence for this specific user.
+Convert this news into actionable insights.
 
 USER PROFILE:
 ${profileBlock(profile)}
@@ -173,18 +177,22 @@ PublishedAt: ${article.publishedAt || "Unknown"}
 
 OUTPUT FORMAT (strict JSON only):
 {
-  "decisionTrigger": "string",
-  "recommendedActions": ["string", "string"],
-  "urgencyLevel": "Low | Medium | High",
+  "trigger": "string",
+  "actions": ["string", "string"],
+  "urgency": "Low | Medium | High",
   "timeHorizon": "Immediate | Short-term | Long-term",
-  "followUpSignals": ["string", "string", "string"]
+  "signals": ["string", "string", "string"]
 }
 
 RULES:
-- decisionTrigger: one clear line explaining why this matters now.
-- recommendedActions: 2-4 practical next steps tailored to the user profile.
-- followUpSignals: 3-5 concrete signals/events/metrics to monitor.
+- trigger: explain in 1-2 lines why this news is important RIGHT NOW.
+- actions: give 2-4 practical actions tailored to the user profile.
+- urgency: choose Low, Medium, or High and base it on concrete near-term implications.
+- signals: list concrete things the user should monitor next (3-5 items).
 - Avoid generic statements.
-- Keep tone clear, direct, insightful.
+- Personalize using user profile.
+- Focus on real-world decisions (career, investment, learning).
+- Avoid vague advice.
+- Keep tone clear, sharp, practical.
 - Do not include markdown. Return valid JSON only.`;
 }

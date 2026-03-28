@@ -1,4 +1,4 @@
-import { generateText } from "./geminiService.js";
+import { generateText } from "./mistralService.js";
 import { buildNewsToActionPrompt } from "./promptTemplates.js";
 
 export async function generateNewsToActionPlan({ article, profile }) {
@@ -33,34 +33,45 @@ function normalizeActionPlan(plan, article, profile) {
   const primaryInterest = interests[0] || "your focus area";
   const primaryGoal = goals[0] || "your near-term objective";
 
-  const urgencyLevel = normalizeUrgency(plan?.urgencyLevel);
+  const urgencyLevel = normalizeUrgency(plan?.urgency || plan?.urgencyLevel);
   const timeHorizon = normalizeTimeHorizon(plan?.timeHorizon);
 
-  const recommendedActions = asStringArray(plan?.recommendedActions, 2, 4);
-  const followUpSignals = asStringArray(plan?.followUpSignals, 3, 5);
+  const recommendedActions = asStringArray(plan?.actions || plan?.recommendedActions, 2, 4);
+  const followUpSignals = asStringArray(plan?.signals || plan?.followUpSignals, 3, 5);
+
+  const trigger =
+    asString(plan?.trigger || plan?.decisionTrigger) ||
+    `As a ${profession}, this development may quickly influence decisions tied to ${primaryInterest}.`;
+
+  const actions =
+    recommendedActions.length >= 2
+      ? recommendedActions
+      : [
+          `Identify one concrete scenario where this news changes your approach to ${primaryInterest}.`,
+          `Create a 30-day checkpoint tied to ${primaryGoal} and record whether this trend is strengthening.`,
+          "List one downside risk and one upside opportunity before making your next move."
+        ].slice(0, 3);
+
+  const signals =
+    followUpSignals.length >= 3
+      ? followUpSignals
+      : [
+          `Any new announcements related to: ${article?.title?.slice(0, 80) || "this story"}`,
+          `Movement from peers or competitors in ${primaryInterest}`,
+          "Changes in regulatory, funding, or demand indicators over the next few weeks"
+        ];
 
   return {
-    decisionTrigger:
-      asString(plan?.decisionTrigger) ||
-      `As a ${profession}, this development may quickly influence decisions tied to ${primaryInterest}.`,
-    recommendedActions:
-      recommendedActions.length >= 2
-        ? recommendedActions
-        : [
-            `Identify one concrete scenario where this news changes your approach to ${primaryInterest}.`,
-            `Create a 30-day checkpoint tied to ${primaryGoal} and record whether this trend is strengthening.`,
-            "List one downside risk and one upside opportunity before making your next move."
-          ].slice(0, 3),
-    urgencyLevel,
+    trigger,
+    actions,
+    urgency: urgencyLevel,
     timeHorizon,
-    followUpSignals:
-      followUpSignals.length >= 3
-        ? followUpSignals
-        : [
-            `Any new announcements related to: ${article?.title?.slice(0, 80) || "this story"}`,
-            `Movement from peers or competitors in ${primaryInterest}`,
-            "Changes in regulatory, funding, or demand indicators over the next few weeks"
-          ]
+    signals,
+    // Compatibility aliases for existing consumers.
+    decisionTrigger: trigger,
+    recommendedActions: actions,
+    urgencyLevel,
+    followUpSignals: signals
   };
 }
 

@@ -32,6 +32,10 @@ export default function NewsPage() {
     })();
   }, [ready, isAuthenticated]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCategory]);
+
   if (!ready || !isAuthenticated) {
     return (
       <main className="mx-auto max-w-7xl px-4 py-8">
@@ -55,10 +59,6 @@ export default function NewsPage() {
     return matchesSearch && matchesCategory;
   });
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, selectedCategory]);
-
   const totalPages = Math.max(1, Math.ceil(filteredArticles.length / pageSize));
   const safePage = Math.min(currentPage, totalPages);
   const startIndex = (safePage - 1) * pageSize;
@@ -66,8 +66,8 @@ export default function NewsPage() {
 
   return (
     <AppShell
-      title="News Hub"
-      subtitle="Browse all business stories, filter by category, and discover emerging patterns."
+      title=""
+      subtitle=""
     >
       {error && <div className="panel p-4 text-sm text-rose-300">{error}</div>}
 

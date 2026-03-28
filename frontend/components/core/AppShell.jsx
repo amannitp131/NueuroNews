@@ -9,7 +9,6 @@ export default function AppShell({ title, subtitle, children }) {
           <div className="absolute right-24 top-10 h-16 w-16 rounded-full bg-blue-400/25 blur-xl" />
           <div className="relative z-10">
             <div>
-              <p className="eyebrow mono">NeuroNews Intelligence</p>
               <h1 className="mt-2 text-2xl md:text-4xl font-semibold tracking-tight">{title}</h1>
               <p className="mt-2 text-sm text-slate-300 max-w-2xl">{subtitle}</p>
             </div>

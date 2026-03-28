@@ -1,4 +1,4 @@
-import { generateText } from "./geminiService.js";
+import { generateText } from "./mistralService.js";
 import { buildVideoScriptPrompt } from "./promptTemplates.js";
 import { env } from "../config/env.js";
 

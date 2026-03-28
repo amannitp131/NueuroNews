@@ -6,6 +6,7 @@ import AppShell from "../../components/core/AppShell";
 import LoadingCard from "../../components/core/LoadingCard";
 import StoryArcBoard from "../../components/story/StoryArcBoard";
 import StoryArcInput from "../../components/story/StoryArcInput";
+import ArcAnalystChat from "../../components/story/ArcAnalystChat";
 import { useRequireAuth } from "../../lib/authGuard";
 import { fetchStories } from "../../lib/api";
 
@@ -59,27 +60,30 @@ export default function StoryArcPage() {
 
   return (
     <AppShell
-      title="Story Arcs"
-      subtitle="Watch how narratives unfold — key players, turning points, and where it's heading."
+
     >
       {loading ? <LoadingCard label="Loading Story Arcs" /> : null}
       {error ? <div className="panel p-4 text-sm text-rose-300">{error}</div> : null}
 
       {!loading ? (
         <>
-          <div className="grid gap-4 md:grid-cols-2">
+          {/* <div className="grid gap-4 md:grid-cols-2">
             <StoryArcInput onTracked={handleTracked} />
-            <Link
-              href="/story-arcs/builder"
-              className="panel p-5 border border-dashed border-cyan-300/30 hover:border-cyan-300/60 hover:bg-cyan-300/5 transition flex flex-col items-center justify-center text-center"
-            >
-              <p className="text-2xl mb-2">🏗️</p>
-              <p className="font-semibold text-slate-100">Build New Arc</p>
-              <p className="text-xs text-slate-400 mt-1">
-                Manually connect multiple articles to create a story arc
-              </p>
-            </Link>
-          </div>
+            <div className="space-y-3">
+              <div className="panel p-5 space-y-3">
+                <p className="text-lg font-semibold text-slate-100">Build New Arc</p>
+                <p className="text-sm text-slate-400">
+                  Manually connect multiple articles to create a story arc
+                </p>
+                <Link
+                  href="/story-arcs/builder"
+                  className="w-full inline-block rounded-lg bg-cyan-300 px-6 py-3 text-sm font-semibold text-slate-950 hover:bg-cyan-200 transition text-center"
+                >
+                  Create New Arc →
+                </Link>
+              </div>
+            </div>
+          </div> */}
 
           <div className="panel p-4">
             <p className="eyebrow">Arc Selector</p>
@@ -98,9 +102,26 @@ export default function StoryArcPage() {
             </div>
           </div>
 
-          <StoryArcBoard arc={active} />
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="md:col-span-2">
+              <StoryArcBoard arc={active} />
+            </div>
+            <div className="h-full">
+              <ArcAnalystChat 
+                arcHeadline={active?.headline || "Story Arc"} 
+                arcEntities={active?.entities || []}
+              />
+            </div>
+          </div>
         </>
       ) : null}
+
+       <Link
+                  href="/story-arcs/builder"
+                  className="w-full inline-block rounded-lg bg-cyan-300 px-6 py-3 text-sm font-semibold text-slate-950 hover:bg-cyan-200 transition text-center"
+                >
+                  Create New Arc →
+                </Link>
     </AppShell>
   );
 }

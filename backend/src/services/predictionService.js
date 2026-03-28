@@ -1,4 +1,4 @@
-import { generateText } from "./geminiService.js";
+import { generateText } from "./mistralService.js";
 import { buildPredictionPrompt } from "./promptTemplates.js";
 import { extractEntities, scoreSentiment } from "../utils/nlp.js";
 import { Article } from "../models/Article.js";

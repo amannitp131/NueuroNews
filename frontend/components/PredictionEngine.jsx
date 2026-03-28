@@ -27,12 +27,11 @@ export default function PredictionEngine({ articleId }) {
     return (
       <div className="panel p-4">
         <p className="eyebrow">🔮 WHAT HAPPENS NEXT</p>
-        <p className="mt-2 text-sm text-slate-400">Generate AI-powered outcome scenarios.</p>
         <button
           onClick={runPrediction}
           className="mt-3 rounded-lg bg-cyan-300/20 text-cyan-200 px-3 py-1.5 text-xs font-semibold hover:bg-cyan-300/30 transition"
         >
-          Generate what happens next
+         SEE
         </button>
       </div>
     );

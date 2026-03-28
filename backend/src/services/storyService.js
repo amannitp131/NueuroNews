@@ -1,6 +1,6 @@
 import { StoryArc } from "../models/StoryArc.js";
 import { extractEntities, scoreSentiment } from "../utils/nlp.js";
-import { generateText } from "./geminiService.js";
+import { generateText } from "./mistralService.js";
 
 export async function buildStoryKey(entities = []) {
   if (!entities.length) return "general-market-updates";

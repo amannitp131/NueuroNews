@@ -101,3 +101,10 @@ export function generateNewsToAction(articleId, forceRefresh = false) {
     body: JSON.stringify({ articleId, forceRefresh })
   });
 }
+
+export function enhanceHeadline(headline) {
+  return apiFetch("/ai/headline/enhance", {
+    method: "POST",
+    body: JSON.stringify({ headline })
+  });
+}

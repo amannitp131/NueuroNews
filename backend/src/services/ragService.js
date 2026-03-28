@@ -1,5 +1,5 @@
 import { env } from "../config/env.js";
-import { generateText, embedText } from "./geminiService.js";
+import { generateText, embedText } from "./mistralService.js";
 import { queryVector, upsertVector } from "./vectorService.js";
 import { chunkText } from "../utils/chunkText.js";
 import { buildPersonalizedBriefingPrompt, buildRagAnswerPrompt } from "./promptTemplates.js";

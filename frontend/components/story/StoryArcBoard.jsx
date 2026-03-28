@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 export default function StoryArcBoard({ arc }) {
@@ -103,7 +104,16 @@ export default function StoryArcBoard({ arc }) {
                           {item.title}
                         </h3>
                       </div>
-                      <span className="text-lg shrink-0">{sentimentIcon}</span>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-lg">{sentimentIcon}</span>
+                        <Link
+                          href={`/news/${item.articleId}`}
+                          className="text-cyan-300 hover:text-cyan-100 transition text-lg hover:translate-x-1 duration-200"
+                          title="View full article"
+                        >
+                          →
+                        </Link>
+                      </div>
                     </div>
 
                     <p className="text-xs text-slate-400 mb-3">
