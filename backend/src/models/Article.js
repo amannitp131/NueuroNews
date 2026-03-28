@@ -30,6 +30,25 @@ const articleSchema = new mongoose.Schema(
         signals: [{ type: String }],
         generatedAt: { type: Date, default: Date.now }
       }
+    ],
+    debateInsights: [
+      {
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+        payload: { type: mongoose.Schema.Types.Mixed, required: true },
+        debateExchanges: [
+          {
+            userOpinion: { type: String, required: true },
+            aiCounterArgument: {
+              title: { type: String },
+              counterPoints: [{ type: String }],
+              concessions: [{ type: String }]
+            },
+            exchangeIndex: { type: Number, default: 0 },
+            timestamp: { type: Date, default: Date.now }
+          }
+        ],
+        generatedAt: { type: Date, default: Date.now }
+      }
     ]
   },
   { timestamps: true }

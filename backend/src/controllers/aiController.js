@@ -6,6 +6,7 @@ import { generateNewsVideoPackage } from "../services/videoGeneratorService.js";
 import { generatePrediction } from "../services/predictionService.js";
 import { generateNewsToActionPlan } from "../services/newsToActionService.js";
 import { generateCatchyHeadline } from "../services/headlineService.js";
+import { generateDebateMode, generateDebateExchange } from "../services/debateService.js";
 
 export const summarizeArticle = asyncHandler(async (req, res) => {
   const { articleId } = req.body;
@@ -241,6 +242,151 @@ export const enhanceHeadline = asyncHandler(async (req, res) => {
     data: {
       original: headline,
       enhanced: catchyHeadline
+    }
+  });
+});
+
+export const generateDebate = asyncHandler(async (req, res) => {
+  const { articleId, rawText, title, content, source, publishedAt, forceRefresh = false } = req.body;
+
+  let article;
+
+  if (articleId) {
+    article = await Article.findById(articleId);
+    if (!article) {
+      return res.status(404).json({ success: false, message: "Article not found" });
+    }
+  } else {
+    const text = String(rawText || content || "").trim();
+    if (!text) {
+      return res.status(400).json({
+        success: false,
+        message: "Provide either articleId or raw article text"
+      });
+    }
+
+    article = {
+      title: title || "Manual Article Input",
+      content: text,
+      source: source || "manual",
+      publishedAt: publishedAt || new Date().toISOString()
+    };
+  }
+
+  // Profile is optional for Debate Mode.
+  const profile = await UserProfile.findOne({ userId: req.user.id });
+
+  // Optional per-user cache for stored articles.
+  if (articleId && !forceRefresh) {
+    const cached = (article.debateInsights || []).find((entry) => String(entry.userId) === String(req.user.id));
+    if (cached?.payload) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          articleRef: articleId,
+          ...cached.payload,
+          generatedAt: cached.generatedAt,
+          cached: true
+        }
+      });
+    }
+  }
+
+  const debate = await generateDebateMode({ article, profile });
+
+  const generatedAt = new Date();
+
+  if (articleId) {
+    article.debateInsights = (article.debateInsights || []).filter(
+      (entry) => String(entry.userId) !== String(req.user.id)
+    );
+
+    article.debateInsights.push({
+      userId: req.user.id,
+      payload: debate,
+      generatedAt
+    });
+
+    await article.save();
+  }
+
+  return res.status(200).json({
+    success: true,
+    data: {
+      articleRef: articleId || null,
+      ...debate,
+      generatedAt,
+      cached: false
+    }
+  });
+});
+
+export const submitDebateOpinion = asyncHandler(async (req, res) => {
+  const { articleId, userOpinion } = req.body;
+
+  if (!articleId) {
+    return res.status(400).json({
+      success: false,
+      message: "articleId is required"
+    });
+  }
+
+  if (!userOpinion || typeof userOpinion !== "string" || !userOpinion.trim()) {
+    return res.status(400).json({
+      success: false,
+      message: "userOpinion text is required"
+    });
+  }
+
+  const article = await Article.findById(articleId);
+  if (!article) {
+    return res.status(404).json({ success: false, message: "Article not found" });
+  }
+
+  // Find or create the user's debate insight entry
+  let debateInsight = (article.debateInsights || []).find(
+    (entry) => String(entry.userId) === String(req.user.id)
+  );
+
+  if (!debateInsight) {
+    return res.status(404).json({
+      success: false,
+      message: "Debate not yet initiated for this article. Generate debate mode first."
+    });
+  }
+
+  // Get existing exchanges for context
+  const previousExchanges = debateInsight.debateExchanges || [];
+  const exchangeIndex = previousExchanges.length + 1;
+
+  // Call AI service to generate counter-argument
+  const counterArgument = await generateDebateExchange({
+    article,
+    userOpinion: userOpinion.trim(),
+    previousExchanges: previousExchanges.slice(-3) // Include last 3 exchanges for context
+  });
+
+  // Create new exchange entry
+  const newExchange = {
+    userOpinion: userOpinion.trim(),
+    aiCounterArgument: counterArgument,
+    exchangeIndex,
+    timestamp: new Date()
+  };
+
+  // Add to debateExchanges array
+  debateInsight.debateExchanges = debateInsight.debateExchanges || [];
+  debateInsight.debateExchanges.push(newExchange);
+
+  // Save article
+  await article.save();
+
+  return res.status(200).json({
+    success: true,
+    data: {
+      articleRef: articleId,
+      exchange: newExchange,
+      exchangeIndex
     }
   });
 });

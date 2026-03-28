@@ -196,3 +196,84 @@ RULES:
 - Keep tone clear, sharp, practical.
 - Do not include markdown. Return valid JSON only.`;
 }
+
+export function buildDebateModePrompt({ article, profile }) {
+  return `You are NeuroNews Debate Mode Analyst.
+
+TASK:
+Generate two strong, well-reasoned opposing perspectives for this news.
+
+USER PROFILE:
+${profileBlock(profile)}
+
+ARTICLE:
+Title: ${article.title}
+Content: ${article.content}
+Source: ${article.source || "Unknown"}
+PublishedAt: ${article.publishedAt || "Unknown"}
+
+OUTPUT FORMAT (strict JSON only):
+{
+  "optimistic": {
+    "title": "string",
+    "points": ["string", "string", "string"],
+    "beneficiaries": "string"
+  },
+  "pessimistic": {
+    "title": "string",
+    "points": ["string", "string", "string"],
+    "risks": "string"
+  },
+  "realityCheck": "string"
+}
+
+RULES:
+- Both sides must be equally strong and specific.
+- Avoid generic statements or vague macro commentary.
+- Use reasoning, not opinion-only claims.
+- Keep each side concise and sharp.
+- For optimistic points: include why this could succeed and who benefits.
+- For pessimistic points: include risks/downsides and who might lose.
+- Reality check should be a neutral 2-3 line summary including deciding factors.
+- Do not include markdown. Return valid JSON only.`;
+}
+
+export function buildDebateExchangePrompt({ article, userOpinion, previousExchanges = [] }) {
+  const exchangeContext = previousExchanges
+    .map(
+      (ex, idx) =>
+        `Exchange ${idx + 1}:\nUser Opinion: ${ex.userOpinion}\nAI Counter: ${ex.aiCounterArgument?.title}`
+    )
+    .join("\n\n");
+
+  return `You are NeuroNews Debate Mode Responder.
+
+TASK:
+Generate a strong, specific counter-argument to the user's stated opinion about this news.
+
+ARTICLE:
+Title: ${article.title}
+Content: ${article.content}
+
+PREVIOUS EXCHANGES:
+${exchangeContext || "This is the first exchange."}
+
+USER'S STATED OPINION:
+"${userOpinion}"
+
+OUTPUT FORMAT (strict JSON only):
+{
+  "title": "string (concise counter-thesis)",
+  "counterPoints": ["string", "string", "string"],
+  "concessions": ["string", "string"] (points where AI might partially agree or acknowledge user's perspective)
+}
+
+RULES:
+- Generate specific, reasoned counter-arguments—not vague disagreement.
+- Reference article details to support your counter-position.
+- If the user opinion has valid points, acknowledge in "concessions" field.
+- Keep counterPoints short and impactful (each 1-2 sentences).
+- Tone: respectful, intellectually rigorous, not condescending.
+- Show evidence of understanding the user's position before counter-arguing.
+- Do not include markdown. Return valid JSON only.`;
+}

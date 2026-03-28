@@ -108,3 +108,17 @@ export function enhanceHeadline(headline) {
     body: JSON.stringify({ headline })
   });
 }
+
+export function generateDebateMode(articleId) {
+  return apiFetch("/ai/debate", {
+    method: "POST",
+    body: JSON.stringify({ articleId })
+  });
+}
+
+export function submitDebateOpinion(articleId, userOpinion) {
+  return apiFetch("/ai/debate/exchange", {
+    method: "POST",
+    body: JSON.stringify({ articleId, userOpinion })
+  });
+}

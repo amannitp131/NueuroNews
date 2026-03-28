@@ -6,6 +6,7 @@ import Link from "next/link";
 import AppShell from "../../../components/core/AppShell";
 import LoadingCard from "../../../components/core/LoadingCard";
 import ChatPanel from "../../../components/news/ChatPanel";
+import DebateModePanel from "../../../components/news/DebateModePanel";
 import InsightPanel from "../../../components/news/InsightPanel";
 import PredictionEngine from "../../../components/PredictionEngine";
 import { useRequireAuth } from "../../../lib/authGuard";
@@ -485,6 +486,8 @@ export default function NewsDetailPage() {
                   }
                 `}</style>
               </div>
+
+              {articleId ? <DebateModePanel articleId={articleId} /> : null}
 
               <ChatPanel />
 

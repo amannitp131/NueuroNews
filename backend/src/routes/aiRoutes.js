@@ -2,6 +2,8 @@ import { Router } from "express";
 import {
 	chatWithNews,
 	generateNewsToAction,
+	generateDebate,
+	submitDebateOpinion,
 	generateNewsVideo,
 	predictOutcomes,
 	summarizeArticle,
@@ -17,5 +19,7 @@ router.post("/video/generate", generateNewsVideo);
 router.post("/predict", predictOutcomes);
 router.post("/action", generateNewsToAction);
 router.post("/headline/enhance", requireFields(["headline"]), enhanceHeadline);
+router.post("/debate", generateDebate);
+router.post("/debate/exchange", submitDebateOpinion);
 
 export default router;
