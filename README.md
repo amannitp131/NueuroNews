@@ -1,116 +1,134 @@
 # NeuroNews
 
-NeuroNews is a full-stack business intelligence app that turns live multi-source business news into personalized insights.
+> Real-time business news intelligence that does not just summarize headlines, it predicts what happens next.
 
-It includes:
-- user authentication (signup/login + JWT)
-- profile-driven personalization
-- live news scraping and ingestion
-- AI summary and RAG chat
-- story arc tracking
-- AI prediction engine (hybrid rules + LLM)
-- AI video package generation for news explainers
+[![Next.js](https://img.shields.io/badge/Frontend-Next.js%2014-black)](#tech-stack)
+[![Node.js](https://img.shields.io/badge/Backend-Node.js%20%2B%20Express-3c873a)](#tech-stack)
+[![MongoDB](https://img.shields.io/badge/Database-MongoDB-4ea94b)](#tech-stack)
+[![AI](https://img.shields.io/badge/AI-Gemini%20%2B%20RAG-orange)](#ai--intelligence-layer)
+[![Docker](https://img.shields.io/badge/DevOps-Docker%20Compose-2496ed)](#run-with-docker)
 
-## Complete Feature List
+NeuroNews is a full-stack AI platform built for hackathon impact. It ingests live business news, personalizes intelligence by user profile, reasons over stories with retrieval-augmented generation, forecasts market outcomes, and auto-generates short-form explainer video packages.
 
-### Authentication and user management
+## Why This Wins Hackathons
 
-- signup with hashed password storage in MongoDB
-- login with JWT token generation
-- session restoration on frontend via stored auth token
-- current-user endpoint for auth refresh (`/api/auth/me`)
-- protected routes across profile/news/ai/story APIs
+- Solves a real problem: information overload in business news.
+- Goes beyond summarization: combines retrieval, reasoning, prediction, and actionability.
+- End-to-end product: auth, profile onboarding, personalized feed, AI insights, storyline tracking.
+- Judges-friendly demo flow: sign up, open article, generate insight, chat, predict, create video.
+- Production-minded architecture: modular backend services, optional vector DB, Dockerized stack.
 
-### Profile and personalization
+## Core Features
 
-- profile capture: name, profession, interests, goals
-- profile upsert endpoint for edits (`/api/profiles/me`)
-- personalized feed ranking by profile interests and sectors
-- personalized prompt context for AI summary and AI chat
+### 1) Personalized News Intelligence
 
-### News ingestion and enrichment
+- JWT-based signup/login with protected routes.
+- Profile-driven feed ranking using interests, profession, goals, preferred sectors, and regions.
+- Auto-refresh workflow that scrapes and enriches content when feeds are sparse.
 
-- live multi-source RSS scraping and article extraction
-- manual article ingestion API (`/api/news/ingest`)
-- automatic fallback scrape when personalized feed is empty
-- NLP enrichment on ingest:
-  - entity extraction
-  - sentiment scoring
-- persistence in MongoDB with story arc linkage
+### 2) Live Ingestion + NLP Enrichment
 
-### RAG and AI intelligence
+- Multi-source RSS ingestion and article extraction.
+- Manual ingest and scrape triggers through API.
+- On-ingest enrichment with entity extraction and sentiment scoring.
+- MongoDB persistence with story arc linkage.
 
-- semantic chunking and embedding pipeline
-- vector retrieval with Pinecone support
-- local in-memory vector fallback when Pinecone is not configured
-- personalized article summary endpoint (`/api/ai/summarize`)
-- grounded Q&A over indexed news (`/api/ai/chat`)
+### 3) AI + RAG Intelligence Layer
 
-### Prediction engine
+- Semantic chunking and embedding of article corpus.
+- Retrieval over Pinecone (optional) with local in-memory fallback.
+- Personalized AI article summaries.
+- Grounded chat over indexed news context.
 
-- endpoint: `/api/ai/predict`
-- accepts existing article (`articleId`) or raw article text
-- hybrid system:
-  - deterministic rule signals
-  - historical pattern matching from stored ET articles
+### 4) Prediction Engine (Hybrid Reasoning)
+
+- Supports article-based and raw-text predictions.
+- Hybrid model combines:
+  - deterministic rules
+  - historical pattern matching from stored articles
   - LLM scenario reasoning
-- output includes:
-  - possible future outcomes
-  - market impact view
-  - confidence level
-  - watch signals
+- Returns outcomes, market impact angle, confidence, and watch signals.
 
-### Video generation engine
+### 5) AI Video Package Generator
 
-- endpoint: `/api/ai/video/generate`
-- accepts existing article (`articleId`) or raw article text
-- generates structured video package:
-  - hook and script
-  - scene-by-scene narration and frame prompts
-  - key takeaways and disclaimer
-- supports configurable tone and target duration
+- Converts news context into a short explainer-ready package.
+- Outputs hook, script, scene plan, narration prompts, and takeaways.
+- Supports configurable tone and target duration.
 
-### Story arc intelligence
+### 6) Story Arc Tracking
 
-- story arc discovery and tracking
-- timeline endpoint for each story (`/api/stories/:id/timeline`)
-- sentiment trend tracking across story evolution
-- quick arc-tracking trigger (`/api/stories/track`)
+- Detects and tracks evolving narratives across related articles.
+- Timeline visualization for story progression.
+- Sentiment trend evolution over time.
 
-### Frontend experience
+## Demo Narrative (90-Second Pitch)
 
-- modern responsive navigation with auth-aware links
-- hero, login, and register pages
-- dashboard with personalized feed cards
-- world snapshot panel (macro pulse style view)
-- article detail page with:
-  - AI summary generation
-  - impact analysis and predictions panel
-  - follow-up AI Q&A chat panel
-- story arc page with arc selector and timeline board
-- profile editor with validation and structured inputs
+1. User signs up and defines interests (for example: EV, fintech, geopolitics).
+2. Dashboard loads a personalized feed with high-signal business stories.
+3. User opens an article and generates AI summary plus follow-up chat.
+4. User runs prediction to see possible market scenarios and confidence.
+5. User generates a video package to turn insight into creator-ready content.
+6. User checks story arc timeline to understand how the narrative is evolving.
 
-### Developer and operations features
+## Product Screens and Modules
 
-- one-command seed flow (`npm run seed`) from multiple business sources
-- Docker Compose support (frontend + backend + MongoDB)
-- environment-driven configuration for models/providers
-- modular backend architecture (controllers/services/routes)
-- dedicated backend docs for prompting, prediction, and video generation
+- Landing and authentication: `/`, `/login`, `/signup`
+- Dashboard intelligence hub: `/dashboard`
+- Article deep-dive: `/news/[id]`
+- Story arc analytics: `/story-arcs`, `/story-arcs/builder`
+- Onboarding and profile: `/onboarding`, `/profile`
+
+## API Highlights
+
+Base URL: `/api`
+
+### Auth
+
+- `POST /auth/signup`
+- `POST /auth/login`
+- `GET /auth/me` (auth required)
+
+### Profile
+
+- `GET /profiles/me` (auth required)
+- `POST /profiles/me` (auth required)
+
+### News
+
+- `GET /news/feed` (auth required)
+- `GET /news/:id` (auth required)
+- `POST /news/ingest` (auth required)
+- `POST /news/scrape` (auth required)
+
+### AI
+
+- `POST /ai/summarize` (auth required)
+- `POST /ai/chat` (auth required)
+- `POST /ai/predict` (auth required)
+- `POST /ai/video/generate` (auth required)
+
+### Stories
+
+- `GET /stories` (auth required)
+- `GET /stories/:id` (auth required)
+- `GET /stories/:id/timeline` (auth required)
+- `POST /stories/track` (auth required)
 
 ## Tech Stack
 
-- Frontend: Next.js 14 (App Router), React 18, Tailwind CSS, Recharts
+- Frontend: Next.js 14, React 18, Tailwind CSS, Recharts
 - Backend: Node.js, Express, Mongoose
 - Database: MongoDB
-- AI: Gemini APIs (generation + embeddings)
-- Vector store: Pinecone (optional) with local in-memory fallback
+- AI/LLM: Gemini generation + embeddings
+- Vector Layer: Pinecone (optional) with local fallback
+- DevOps: Docker Compose
 
 ## Repository Structure
 
 ```text
 Economic_times/
   backend/
+    docs/
     src/
       config/
       controllers/
@@ -128,37 +146,44 @@ Economic_times/
   README.md
 ```
 
-## Local Setup
+## Run Locally
 
-### 1. Backend
+### Prerequisites
+
+- Node.js 18+
+- npm 9+
+- MongoDB (local or cloud)
+- Gemini API key
+
+### 1) Backend Setup
 
 ```bash
 cd backend
-cp .env.example .env
 npm install
+cp .env.example .env
 npm run dev
 ```
 
-Optional initial data seed:
+Optional seed for fast demo data:
 
 ```bash
 npm run seed
 ```
 
-Backend runs at `http://localhost:5000`.
+Backend runs on `http://localhost:5000`.
 
-### 2. Frontend
+### 2) Frontend Setup
 
 ```bash
 cd frontend
-cp .env.example .env.local
 npm install
+cp .env.example .env.local
 npm run dev
 ```
 
-Frontend runs at `http://localhost:3000`.
+Frontend runs on `http://localhost:3000`.
 
-## Docker Setup
+## Run With Docker
 
 ```bash
 cp backend/.env.example backend/.env
@@ -167,21 +192,24 @@ docker compose up --build
 ```
 
 Services:
-- frontend: `http://localhost:3000`
-- backend: `http://localhost:5000`
-- mongo: `localhost:27017`
+
+- Frontend: `http://localhost:3000`
+- Backend: `http://localhost:5000`
+- MongoDB: `localhost:27017`
 
 ## Environment Variables
 
 ### Backend (`backend/.env`)
 
-Required for full AI features:
+Required:
+
 - `MONGODB_URI`
 - `JWT_SECRET`
 - `GEMINI_API_KEY`
 
 Common:
-- `PORT` (default `5000`)
+
+- `PORT` (default: `5000`)
 - `NODE_ENV`
 - `GEMINI_MODEL`
 - `GEMINI_EMBEDDING_MODEL`
@@ -189,14 +217,16 @@ Common:
 - `TOP_K`
 
 Pinecone (optional):
+
 - `PINECONE_API_KEY`
 - `PINECONE_INDEX`
 - `PINECONE_CLOUD`
 - `PINECONE_REGION`
 
-Scraping/media options:
+Scraping and media options:
+
 - `ECONOMIC_TIMES_RSS_URL`
-- `NEWS_RSS_SOURCES` (optional JSON array of `{ "name": "Source", "rssUrl": "https://..." }`)
+- `NEWS_RSS_SOURCES` (JSON array format)
 - `SCRAPER_USER_AGENT`
 - `SCRAPE_FETCH_FULL_ARTICLE`
 - `TTS_PROVIDER`
@@ -207,99 +237,56 @@ Scraping/media options:
 
 ### Frontend (`frontend/.env.local`)
 
-- `NEXT_PUBLIC_API_BASE_URL` (default used in code: `http://localhost:5000/api`)
+- `NEXT_PUBLIC_API_BASE_URL` (default: `http://localhost:5000/api`)
 
-## API Overview
-
-Base path: `/api`
-
-### Auth (public)
-
-- `POST /auth/signup`
-  - body: `email`, `name`, `password`
-  - optional body: `profession`, `interests`, `goals`
-  - returns: JWT token + user payload
-
-- `POST /auth/login`
-  - body: `email`, `password`
-  - returns: JWT token + user payload
-
-- `GET /auth/me`
-  - auth: required
-  - returns current user
-
-### Profile (auth required)
-
-- `GET /profiles/me`
-- `POST /profiles/me`
-  - required body fields: `name`, `profession`, `interests`
-  - optional: `goals`, `preferredRegions`, `preferredSectors`
-
-### News (auth required)
-
-- `GET /news/feed`
-  - returns personalized feed from profile interests/sectors
-  - auto-scrapes multiple sources and retries when feed is sparse
-  - supports optional query params: `page`, `limit`
-
-- `GET /news/:id`
-- `POST /news/ingest`
-- `POST /news/scrape`
-
-### AI (auth required)
-
-- `POST /ai/summarize` (body: `articleId`)
-- `POST /ai/chat` (body: `question`)
-- `POST /ai/predict`
-- `POST /ai/video/generate`
-
-### Stories (auth required)
-
-- `GET /stories`
-- `GET /stories/:id`
-- `GET /stories/:id/timeline`
-- `POST /stories/track`
-
-## Product Flow
-
-1. User signs up or logs in.
-2. User updates profile (profession, interests, goals).
-3. Backend fetches/scrapes articles, enriches with NLP metadata, and links story arcs.
-4. Articles are indexed for RAG (Pinecone or local vector fallback).
-5. User reads feed, opens article detail, generates AI summary, and asks chat questions.
-
-## Frontend Routes
-
-- `/` hero page
-- `/login` login page
-- `/signup` register page
-- `/dashboard` main intelligence view
-- `/news/[id]` article + AI summary/chat
-- `/story-arcs` story tracking
-- `/profile` profile editor
-
-## Scripts
+## NPM Scripts
 
 ### Backend
 
-- `npm run dev` start backend with nodemon
-- `npm run start` start backend in production mode
-- `npm run seed` scrape + index seed articles
+- `npm run dev` - start with nodemon
+- `npm run start` - production start
+- `npm run seed` - scrape and index seed articles
 
 ### Frontend
 
-- `npm run dev` start next dev server
-- `npm run build` production build
-- `npm run start` serve production build
+- `npm run dev` - Next.js dev server
+- `npm run build` - production build
+- `npm run start` - serve production build
+- `npm run lint` - lint frontend
 
-## Known Gaps / Next Improvements
+## Architecture Snapshot
 
-- add request validation beyond required-field checks
-- add automated tests (backend integration + frontend e2e/smoke)
-- add rate limiting for auth and scrape routes
-- add structured logging and observability
-- move local vector fallback to persistent storage for production usage
+```text
+Live RSS Sources -> Scraper Service -> NLP Enrichment -> MongoDB
+                                            |
+                                            v
+                                   Chunk + Embed Pipeline
+                                            |
+                                            v
+                               Pinecone / Local Vector Store
+                                            |
+                                            v
+Frontend (Next.js) <-> Backend APIs <-> Gemini Services
+                                |
+                                v
+                 Summary / Chat / Prediction / Video Package
+```
+
+## Hackathon Judge Checklist
+
+- Innovation: combines RAG + forecasting + media generation in one workflow.
+- Technical depth: hybrid reasoning pipeline, vector retrieval, modular services.
+- UX quality: personalized dashboard, deep-dive article intelligence, story timelines.
+- Feasibility: deployable full-stack project with Docker and configurable providers.
+- Business value: faster decision intelligence for traders, analysts, founders, and creators.
+
+## Roadmap
+
+- Add backend integration tests and frontend e2e smoke tests.
+- Add stronger request validation and rate limiting.
+- Add observability dashboards and structured logs.
+- Add persistent fallback vector storage for production-grade local mode.
 
 ## License
 
-This project is for educational/prototype use unless a separate license is provided.
+This repository is currently intended for educational and prototype use unless a separate license is added.
